@@ -9,8 +9,8 @@ import (
 type AppConfig struct {
 	Port        string `env:"PORT" envDefault:"8080"`
 	FrontendDir string `env:"FRONTEND_DIR" envDefault:"./frontend"`
-	TempDir     string `env:"TEMP_DIR" envDefault:"/tmp/web-tool"`
-	SQLLiteDB   string `env:"SQLLiteDB" envDefault:"./web-tool.db"`
+	TempDir     string `env:"TEMP_DIR" envDefault:"/tmp/run-task"`
+	SQLLiteDB   string `env:"SQLLiteDB" envDefault:"./run-task.db"`
 	CrdDir      string `env:"CRD_DIR" envDefault:"./crd"`
 }
 

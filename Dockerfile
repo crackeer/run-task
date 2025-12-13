@@ -2,11 +2,12 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
-# 安装git并克隆前端项目
-RUN apk add --no-cache git
-RUN git clone https://github.com/crackeer/web-tool-frontend.git .
+# 复制本地前端项目文件
+COPY ./frontend .
 
 # 安装依赖并构建
+RUN rm package-lock.json
+RUN rm -rf node_modules
 RUN npm install --registry=https://registry.npmmirror.com
 RUN npm run build
 
@@ -23,7 +24,7 @@ COPY . .
 
 # 安装依赖并编译
 RUN go mod tidy
-RUN go build -o web-tool-backend main.go
+RUN go build -o run-task main.go
 
 # 第三阶段：最终镜像
 FROM alpine:3.19
@@ -34,7 +35,7 @@ RUN apk --no-cache add ca-certificates tzdata
 ENV TZ=Asia/Shanghai
 
 # 复制编译好的后端二进制文件
-COPY --from=backend-builder /app/backend/web-tool-backend ./
+COPY --from=backend-builder /app/backend/run-task ./
 
 # 复制前端构建产物到bin同级目录
 RUN mkdir -p ./frontend
@@ -44,10 +45,10 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend
 COPY .env* ./
 
 # 设置可执行权限
-RUN chmod +x ./web-tool-backend
+RUN chmod +x ./run-task
 
 # 暴露端口
 EXPOSE 8080
 
 # 启动命令
-CMD ["./web-tool-backend"]
+CMD ["./run-task"]
