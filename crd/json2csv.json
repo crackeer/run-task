@@ -1,0 +1,21 @@
+{
+    "title": "JSON转CSV",
+    "package": "web-tool-backend/task/json2csv",
+    "form": {
+        "type": "object",
+        "properties": {
+            "input": {
+                "title": "输入JSON文本",
+                "type": "string",
+                "format": "textarea",
+                "description": "请输入JSON文本内容",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入JSON文本内容"
+                    }
+                ]
+            }
+        }
+    }
+}
