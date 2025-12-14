@@ -15,17 +15,21 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func enableCORS(ctx *gin.Context) {
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	ctx.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	ctx.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
-	ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	if ctx.Request.Method == http.MethodOptions {
-		ctx.AbortWithStatus(http.StatusNoContent)
-		return
+func CORS() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+		ctx.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+		ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if ctx.Request.Method == http.MethodOptions {
+			ctx.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		ctx.Next()
 	}
-	ctx.Next()
 }
 
 func Main() {
@@ -40,8 +44,7 @@ func Main() {
 
 	// 创建 Gin 实例
 	router := gin.Default()
-	router.Use(enableCORS)
-
+	router.Use(CORS())
 	apiGroup := router.Group("/api")
 	{
 		apiGroup.GET("/run", api.RunTaskSSE)
@@ -55,7 +58,7 @@ func Main() {
 		apiGroup.POST("/task/delete", task.DeleteTask)
 		apiGroup.GET("/task/detail", task.GetTaskByID)
 		apiGroup.POST("/upload", file.UploadFile)
-		apiGroup.GET("/download", file.DownloadFile)
+		apiGroup.GET("/file/*path", file.DownloadFile)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {

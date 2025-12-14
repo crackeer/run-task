@@ -1,7 +1,7 @@
 import { createRootRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Layout, Menu } from 'antd'
 import 'antd/dist/reset.css'
-import { HomeOutlined, SettingOutlined, TableOutlined, DatabaseOutlined } from '@ant-design/icons'
+import { HomeOutlined, SettingOutlined, TableOutlined, DatabaseOutlined, UploadOutlined } from '@ant-design/icons'
 
 const RootLayout = () => {
   const { Header, Content } = Layout
@@ -29,6 +29,11 @@ const RootLayout = () => {
                 key: '/config',
                 icon: <DatabaseOutlined />,
                 label: <Link to="/config">任务配置</Link>,
+              },
+              {
+                key: '/upload',
+                icon: <UploadOutlined />,
+                label: <Link to="/upload">文件上传</Link>,
               }
             ]}
           />

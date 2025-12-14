@@ -11,7 +11,7 @@ type AppConfig struct {
 	FrontendDir string `env:"FRONTEND_DIR" envDefault:"./frontend"`
 	TempDir     string `env:"TEMP_DIR" envDefault:"/tmp/run-task"`
 	SQLLiteDB   string `env:"SQLLiteDB" envDefault:"./run-task.db"`
-	CrdDir      string `env:"CRD_DIR" envDefault:"./crd"`
+	AppHost     string `env:"APP_HOST" envDefault:"http://localhost:8080"`
 }
 
 var (
