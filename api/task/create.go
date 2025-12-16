@@ -15,10 +15,10 @@ func CreateTask(ctx *gin.Context) {
 		return
 	}
 
-	inputID, err := container.CreateInput(task.TaskType, task.Input, task.RunEndpoint, task.InputEndpoint)
+	taskID, err := container.CreateTask(task.TaskType, task.Input, task.RunEndpoint)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"task_id": inputID})
+	ctx.JSON(http.StatusOK, gin.H{"task_id": taskID})
 }

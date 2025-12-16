@@ -57,6 +57,11 @@ func Main() {
 		apiGroup.GET("/task/list", task.GetTasks)
 		apiGroup.POST("/task/delete", task.DeleteTask)
 		apiGroup.GET("/task/detail", task.GetTaskByID)
+
+		apiGroup.GET("/task/input/:task_id", task.GetTaskInput)
+		apiGroup.POST("/task/output/:task_id", task.PostTaskOutput)
+		apiGroup.GET("/task/output/:task_id", task.GetTaskOutput)
+
 		apiGroup.POST("/upload", file.UploadFile)
 		apiGroup.GET("/file/*path", file.DownloadFile)
 	}
