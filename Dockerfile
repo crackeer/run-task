@@ -39,6 +39,7 @@ COPY --from=backend-builder /app/backend/run-task ./
 
 # 复制前端构建产物到bin同级目录
 RUN mkdir -p ./frontend
+RUN mkdir -p ./database
 COPY --from=frontend-builder /app/frontend/dist ./frontend
 
 # 复制配置文件

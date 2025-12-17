@@ -52,7 +52,7 @@ func (TaskConfig) TableName() string {
 
 func InitDB() error {
 	var err error
-	db, err = gorm.Open(sqlite.Open(GetConfig().SQLLiteDB), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open(GetConfig().Database), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("failed to connect database: %w", err)
 	}

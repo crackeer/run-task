@@ -10,7 +10,7 @@ type AppConfig struct {
 	Port        string `env:"PORT" envDefault:"8080"`
 	FrontendDir string `env:"FRONTEND_DIR" envDefault:"./frontend"`
 	TempDir     string `env:"TEMP_DIR" envDefault:"/tmp/run-task"`
-	SQLLiteDB   string `env:"SQLLiteDB" envDefault:"./run-task.db"`
+	Database    string `env:"DATABASE" envDefault:"/tmp/run-task.db"`
 	AppHost     string `env:"APP_HOST" envDefault:"http://localhost:8080"`
 }
 

@@ -14,8 +14,10 @@ services:
     restart: always
     environment:
     - SQLITE_DB=/app/sqlite/run-task.db
+    - APP_HOST=http://localhost:8080
+    - DATABASE=/app/database/run-task.db
     ports:
-    - "7000:8080"
+    - "7500:8080"
     volumes:
-    - /usr/local/docker/run-task/sqlite/:/app/sqlite/
+    - /usr/local/docker/run-task/database/:/app/database/
 ```
