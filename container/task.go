@@ -136,8 +136,13 @@ func ListTasks(taskType string, page int, pageSize int) ([]*Task, int64, error) 
 	return tasks, total, nil
 }
 
-// DeleteTask 根据ID删除任务
+// DeleteTask 根据ID删除任务及关联的任务输出
 func DeleteTask(taskID uint) error {
+	// 先删除关联的任务输出
+	if err := db.Where("task_id = ?", taskID).Delete(&TaskOutput{}).Error; err != nil {
+		return err
+	}
+	// 再删除任务
 	result := db.Delete(&Task{}, taskID)
 	return result.Error
 }
