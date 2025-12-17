@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Card, Button, Upload, message, Typography, Input, Progress } from 'antd'
 import { UploadOutlined, CopyOutlined } from '@ant-design/icons'
+import { CopyToClipboard } from 'react-copy-to-clipboard'
 import axios from 'axios'
 
 const { Title } = Typography
@@ -54,11 +55,7 @@ function UploadPage() {
         }
     }
 
-    const handleCopy = () => {
-        navigator.clipboard.writeText(downloadUrl)
-            .then(() => messageApi.success('链接已复制'))
-            .catch(() => messageApi.error('复制失败'))
-    }
+
 
     return (
         <div>
@@ -101,12 +98,13 @@ function UploadPage() {
                             rows={4}
                             style={{ marginBottom: 8 }}
                         />
-                        <Button
-                            icon={<CopyOutlined />}
-                            onClick={handleCopy}
-                        >
-                            复制链接
-                        </Button>
+                        <CopyToClipboard text={downloadUrl} onCopy={() => messageApi.success('链接已复制')}>
+                            <Button
+                                icon={<CopyOutlined />}
+                            >
+                                复制链接
+                            </Button>
+                        </CopyToClipboard>
                     </div>
                 </Card>
             )}
