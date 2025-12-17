@@ -20,7 +20,7 @@ func UploadFile(ctx *gin.Context) {
 	cfg := container.GetConfig()
 
 	// 保存文件到临时目录
-	tempPath := filepath.Join(cfg.TempDir, time.Now().Format("20060102"), file.Filename)
+	tempPath := filepath.Join(cfg.TempDir, time.Now().Format("20060102150405"), file.Filename)
 	if err := os.MkdirAll(filepath.Dir(tempPath), os.ModePerm); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(), "code": -1})
 		return
