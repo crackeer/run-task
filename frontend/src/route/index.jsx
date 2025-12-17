@@ -1,36 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Terminal } from '@xterm/xterm'
-import { FitAddon } from '@xterm/addon-fit'
-import { WebLinksAddon } from '@xterm/addon-web-links'
-import { ImageAddon } from 'xterm-addon-image';
-import '@xterm/xterm/css/xterm.css'
 import { Typography, Button, Card, Space, message, Radio } from 'antd'
 import 'antd/dist/reset.css'
 import FormRender, { useForm } from 'form-render'
+import TaskOutput from '../component/output'
 
 export const Route = createFileRoute('/')({
     component: Index,
 })
 
 function Index() {
-    const [isConnected, setIsConnected] = useState(false)
-    const eventSourceRef = useRef(null)
-    const terminalRef = useRef(null)
-    const terminalInstanceRef = useRef(null)
-    const fitAddonRef = useRef(null)
+    const [currentTaskId, setCurrentTaskId] = useState(null)
     const form = useForm()
     const [tools, setTools] = useState([])
     const [selectedTool, setSelectedTool] = useState('')
     const [selectedToolInfo, setSelectedToolInfo] = useState(null)
     const location = window.location
-    
-    // 轮询控制状态
-    const pollingControlRef = useRef({
-        isRunning: false,
-        taskID: null,
-        timeoutId: null
-    })
+    const [messageApi, contextHolder] = message.useMessage()
+   
 
     // 获取工具列表
     useEffect(() => {
@@ -43,7 +30,6 @@ function Index() {
                     title: config.title,
                     form: JSON.parse(config.form),
                     run_endpoint: config.run_endpoint,
-                    input_endpoint: config.input_endpoint
                 }))
                 setTools(formattedTools)
                 if (formattedTools.length > 0) {
@@ -116,220 +102,46 @@ function Index() {
         localStorage.setItem('lastSelectedTool', value)
     }
 
-    // 轮询获取任务输出
-    const pollTaskOutput = (taskID, lastOutputID = 0) => {
-        return fetch(`/api/task/output/${taskID}?last_id=${lastOutputID}&page_size=200`)
-            .then(response => response.json())
-            .then(outputs => {
-                if (outputs && outputs.length > 0) {
-                    // 更新终端显示
-                    outputs.forEach(output => {
-                        if (terminalInstanceRef.current) {
-                            let msg = output.output.replace(/{WINDOW_HOSTNAME}/g, window.location.host)
-                            terminalInstanceRef.current.writeln(msg)
-                        }
-                    })
-                    // 返回最新的output ID
-                    return outputs[outputs.length - 1].id
-                }
-                return lastOutputID
-            })
-            .catch(error => {
-                console.error('获取任务输出失败:', error)
-                if (terminalInstanceRef.current) {
-                    terminalInstanceRef.current.writeln(`\x1b[31m获取任务输出失败: ${error.message}\x1b[0m`)
-                }
-                return lastOutputID
-            })
-    }
 
-    // 检查任务状态
-    const checkTaskStatus = (taskID) => {
-        return fetch(`/api/task/detail?task_id=${taskID}`)
-            .then(response => response.json())
-            .then(task => {
-                if (task) {
-                    return task
-                }
-                return {
-                    status: 'unknown',
-                    message: '任务不存在',
-                }
-            })
-            .catch(error => {
-                console.error('获取任务状态失败:', error)
-                return {
-                    status: 'error',
-                    message: '获取任务状态失败',
-                }
-            })
-    }
 
-    // 运行任务并轮询获取输出
-    const pollingTaskOutput = (taskID) => {
+    const runTask = () => {
         if (!selectedTool) {
             message.error('请选择一个工具')
             return
         }
 
-        // 初始化终端
-        if (terminalRef.current && !terminalInstanceRef.current) {
-            const terminal = new Terminal({
-                theme: {
-                    background: '#1e1e1e',
-                    foreground: '#d4d4d4'
+        form.validateFields().then((formData) => {
+            // 调用task接口创建任务
+            fetch('/api/task/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 },
-                fontSize: 14,
-                fontFamily: 'Consolas, "Courier New", monospace',
-                cursorBlink: false
-            })
-            const fitAddon = new FitAddon()
-            const webLinksAddon = new WebLinksAddon()
-            const imageAddon = new ImageAddon();
-            terminal.loadAddon(fitAddon)
-            terminal.loadAddon(webLinksAddon)
-            terminal.loadAddon(imageAddon)
-            terminal.open(terminalRef.current)
-            fitAddon.fit()
-
-            terminalInstanceRef.current = terminal
-            fitAddonRef.current = fitAddon
-        }
-
-        // 清除终端内容
-        if (terminalInstanceRef.current) {
-            terminalInstanceRef.current.clear()
-            terminalInstanceRef.current.writeln(`任务 ${taskID} 正在运行...，以下为任务输出--->\n`)
-        }
-
-        // 初始化轮询控制状态
-        pollingControlRef.current = {
-            isRunning: true,
-            taskID: taskID,
-            timeoutId: null
-        }
-
-        // 开始轮询
-        let lastOutputID = 0
-        const pollInterval = 1000 // 1秒轮询一次
-
-        const startPolling = () => {
-            if (!pollingControlRef.current.isRunning) return
-
-            // 先获取任务输出
-            pollTaskOutput(taskID, lastOutputID)
-                .then(newLastOutputID => {
-                    lastOutputID = newLastOutputID
-                    // 然后检查任务状态
-                    return checkTaskStatus(taskID)
+                body: JSON.stringify({
+                    task_type: selectedTool,
+                    input: JSON.stringify(formData),
+                    run_endpoint: selectedToolInfo?.run_endpoint || '',
                 })
-                .then(task => {
-                    if (task.status === 'running') {
-                        // 任务仍在运行，继续轮询
-                        pollingControlRef.current.timeoutId = setTimeout(startPolling, pollInterval)
-                        return
-                    }
-                    pollingControlRef.current.isRunning = false
-                    if (terminalInstanceRef.current) {
-                         terminalInstanceRef.current.writeln(`\n<----以上为任务输出，以下为任务状态`)
-                        terminalInstanceRef.current.writeln(`任务状态: ${task.status}`)
-                        if (task.status === 'success') {
-                            terminalInstanceRef.current.writeln('\x1b[32m任务执行成功\x1b[0m：' + task.result)
-                        } else {
-                            terminalInstanceRef.current.writeln(`\x1b[31m任务执行${task.status === 'failed' ? '失败' : '出错'}\x1b[0m：${task.message}`)
-                        }
-                    }
-                    setIsConnected(false)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    
+                    const taskID = data.task_id
+                    console.log('任务已创建，task_id:', taskID, data)
+                    setCurrentTaskId(taskID)
                 })
                 .catch(error => {
-                    console.error('轮询出错:', error)
-                    pollingControlRef.current.isRunning = false
-                    setIsConnected(false)
+                   
+                    console.error('创建任务失败:', error)
+                    messageApi.error('创建任务失败，请重试')
                 })
-        }
-
-        // 开始轮询
-        setIsConnected(true)
-        startPolling()
+        }).catch(() => {
+            // 表单验证失败，提示用户
+            message.error('请填写完整的表单')
+        })
     }
 
-    // 停止轮询函数
-    const stopPolling = () => {
-        if (pollingControlRef.current.isRunning) {
-            // 清除定时器
-            clearTimeout(pollingControlRef.current.timeoutId)
-            // 更新轮询控制状态
-            pollingControlRef.current.isRunning = false
-            // 更新连接状态
-            setIsConnected(false)
-            // 在终端中显示轮询已停止的消息
-            if (terminalInstanceRef.current) {
-                terminalInstanceRef.current.writeln('\n\x1b[33m轮询已手动停止\x1b[0m')
-            }
-        }
-    }
 
-    // 保留原有的startSSE函数，用于向后兼容
-  const runTask = () => {
-    if (!selectedTool) {
-      message.error('请选择一个工具')
-      return
-    }
-
-    form.validateFields().then((formData) => {
-      // 调用task接口创建任务
-      fetch('/api/task/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          task_type: selectedTool,
-          input: JSON.stringify(formData),
-          run_endpoint: selectedToolInfo?.run_endpoint || '',
-        })
-      })
-        .then(response => response.json())
-        .then(data => {
-          const taskID = data.task_id
-          console.log('任务已创建，task_id:', taskID)
-          pollingTaskOutput(taskID)
-        })
-        .catch(error => {
-          console.error('创建任务失败:', error)
-          message.error('创建任务失败，请重试')
-        })
-    }).catch(() => {
-      // 表单验证失败，提示用户
-      message.error('请填写完整的表单')
-    })
-  }
-
-    // 处理窗口大小变化
-    useEffect(() => {
-        const handleResize = () => {
-            if (terminalInstanceRef.current && fitAddonRef.current) {
-                fitAddonRef.current.fit()
-            }
-        }
-
-        window.addEventListener('resize', handleResize)
-        return () => {
-            window.removeEventListener('resize', handleResize)
-        }
-    }, [])
-
-    // 组件卸载时清理资源
-    useEffect(() => {
-        return () => {
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close()
-            }
-            if (terminalInstanceRef.current) {
-                terminalInstanceRef.current.dispose()
-            }
-        }
-    }, [])
 
     const { Text } = Typography
 
@@ -359,18 +171,11 @@ function Index() {
                                 }}
                                 footer={false}
                             />
-                            {/* 显示当前选中任务的run_endpoint和input_endpoint */}
-                            <div style={{ backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-                                <Typography.Text strong>任务端点配置:</Typography.Text>
-                                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <div>
-                                        <Typography.Text style={{ marginRight: '8px' }}>运行端点:</Typography.Text>
-                                        <Typography.Text code>{selectedToolInfo.run_endpoint || '-'}</Typography.Text>
-                                    </div>
-                                    <div>
-                                        <Typography.Text style={{ marginRight: '8px' }}>输入端点:</Typography.Text>
-                                        <Typography.Text code>{selectedToolInfo.input_endpoint || '-'}</Typography.Text>
-                                    </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div>
+                                    <Typography.Text style={{ marginRight: '8px' }} strong>运行端点:</Typography.Text>
+                                    <Typography.Text code>{selectedToolInfo.run_endpoint || '-'}</Typography.Text>
                                 </div>
                             </div>
                         </div>
@@ -380,28 +185,29 @@ function Index() {
                         <Button
                             type="primary"
                             onClick={runTask}
-                            disabled={isConnected}
-                            loading={isConnected}
+                            disabled={!!currentTaskId}
                         >
                             执行
                         </Button>
-                        <Button
-                            danger
-                            onClick={stopPolling}
-                            disabled={!isConnected}
-                        >
-                            停止轮询
-                        </Button>
+                        {currentTaskId && (
+                            <Button
+                                onClick={() => setCurrentTaskId(null)}
+                            >
+                                清除输出
+                            </Button>
+                        )}
                     </Space>
                 </Space>
             </Card>
 
-            <Card title={<Text strong>任务输出</Text>} bordered={false}>
-                <div
-                    ref={terminalRef}
-                    style={{ width: '100%', height: '600px', borderRadius: '1px' }}
-                ></div>
-            </Card>
+            {currentTaskId && (
+                <TaskOutput
+                    task_id={currentTaskId}
+                    title="任务输出"
+                    autoStart={true}
+                />
+            )}
+            {contextHolder}
         </div>
     )
 }

@@ -26,7 +26,7 @@ func CreateTask(ctx *gin.Context) {
 	err = runTask(taskID, task.RunEndpoint)
 	if err != nil {
 		container.CallbackTask(taskID, "error", "", err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusOK, gin.H{"error": err.Error(), "task_id": taskID})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"task_id": taskID})

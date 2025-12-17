@@ -50,8 +50,7 @@ const TaskConfigPage = () => {
       task_type: record.task_type,
       title: record.title,
       form: record.form,
-      run_endpoint: record.run_endpoint,
-      input_endpoint: record.input_endpoint
+      run_endpoint: record.run_endpoint
     })
     setModalVisible(true)
   }
@@ -221,12 +220,6 @@ const TaskConfigPage = () => {
             label="运行端点"
           >
             <Input placeholder="请输入运行端点" />
-          </Form.Item>
-          <Form.Item
-            name="input_endpoint"
-            label="输入端点"
-          >
-            <Input placeholder="请输入输入端点" />
           </Form.Item>
         </Form>
       </Modal>
