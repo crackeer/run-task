@@ -13,7 +13,6 @@ import (
 
 // RunTaskSSE 处理SSE请求
 func RunTaskSSE(ctx *gin.Context) {
-
 	taskIDStr := ctx.Query("task_id")
 	taskIDInt, _ := strconv.Atoi(taskIDStr)
 	task := container.GetTask(uint(taskIDInt))
@@ -53,4 +52,6 @@ func RunTaskSSE(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": result.Status})
 		return
 	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "任务运行成功"})
+
 }

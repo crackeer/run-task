@@ -137,12 +137,6 @@ const TaskConfigPage = () => {
       width: 200
     },
     {
-      title: '输入端点',
-      dataIndex: 'input_endpoint',
-      key: 'input_endpoint',
-      width: 200
-    },
-    {
       title: '操作',
       key: 'action',
       render: (_, record) => (

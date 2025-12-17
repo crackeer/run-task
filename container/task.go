@@ -60,7 +60,7 @@ func InitDB() error {
 	// 自动迁移创建表
 	db.AutoMigrate(&Task{})
 	db.AutoMigrate(&TaskConfig{})
-
+	db.AutoMigrate(&TaskOutput{})
 	return nil
 }
 
@@ -199,10 +199,9 @@ func CreateTaskOutput(taskID uint, output string) error {
 	return result.Error
 }
 
-func GetTaskOutput(taskID uint, page int, pageSize int) ([]TaskOutput, error) {
+func GetTaskOutput(taskID uint, lastID int, pageSize int) ([]TaskOutput, error) {
 	var taskOutputs []TaskOutput
-	offset := (page - 1) * pageSize
-	result := db.Where("task_id = ?", taskID).Order("id asc").Offset(offset).Limit(pageSize).Find(&taskOutputs)
+	result := db.Where("task_id = ? AND id > ?", taskID, lastID).Order("id asc").Limit(pageSize).Find(&taskOutputs)
 	if result.Error != nil {
 		return nil, result.Error
 	}

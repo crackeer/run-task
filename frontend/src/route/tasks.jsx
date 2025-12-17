@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { Table, Select, Pagination, Card, Spin, message, Button, Modal } from 'antd'
-import { LoadingOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
+import { useState, useEffect, useRef } from 'react'
+import { Table, Select, Pagination, Card, Spin, message, Button, Modal, Tag } from 'antd'
+import { LoadingOutlined, DeleteOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons'
 
 // 输入参数查看器组件
 const InputParamViewer = ({ text, modal }) => {
@@ -144,6 +144,37 @@ const TasksPage = () => {
     })
   }
 
+  // 查看任务结果
+  const handleViewResult = (task) => {
+    modal.info({
+      title: '任务执行结果',
+      content: (
+        <div>
+          {task.status === 'success' && task.result && (
+            <div style={{ marginBottom: '16px' }}>
+              <strong>结果：</strong>
+              <pre style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>
+                {typeof task.result === 'string' ? task.result : JSON.stringify(task.result, null, 2)}
+              </pre>
+            </div>
+          )}
+          {task.status === 'failed' && task.message && (
+            <div style={{ marginBottom: '16px' }}>
+              <strong>错误信息：</strong>
+              <pre style={{ whiteSpace: 'pre-wrap', marginTop: '8px', color: '#ff4d4f' }}>
+                {task.message}
+              </pre>
+            </div>
+          )}
+          {!task.result && !task.message && (
+            <div style={{ color: '#8c8c8c' }}>暂无结果信息</div>
+          )}
+        </div>
+      ),
+      width: 600
+    })
+  }
+
   // 重跑任务
   const handleRerunTask = (task) => {
     // 跳转到首页并传递重跑参数
@@ -153,6 +184,96 @@ const TasksPage = () => {
       to: '/',
       search: {
         rerun_task_id: task.id
+      }
+    })
+  }
+
+  // 查看任务output
+  const handleViewOutput = (task) => {
+    // 创建一个独立的OutputModal组件，使用React状态管理
+    const OutputModal = () => {
+      const [output, setOutput] = useState('')
+      const [lastOutputID, setLastOutputID] = useState(0)
+      const [isPolling, setIsPolling] = useState(task.status === 'running')
+      const timeoutRef = useRef(null)
+      const statusCheckRef = useRef(null)
+
+      // 获取任务output
+      const fetchOutput = () => {
+
+        console.log(lastOutputID)
+        fetch(`/api/task/output/${task.id}?last_id=${lastOutputID}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              const newOutput = data.map(item => item.output).join('\n')
+              setOutput(prev => prev + newOutput)
+              setLastOutputID(data[data.length - 1].id)
+            }
+            
+            // 如果任务仍在运行中，继续轮询
+            if (isPolling) {
+              timeoutRef.current = setTimeout(fetchOutput, 1000)
+            }
+          })
+          .catch(err => {
+            console.error('获取任务output失败:', err)
+            setIsPolling(false)
+          })
+      }
+
+      // 检查任务状态
+      const checkTaskStatus = () => {
+        fetch(`/api/task/detail?task_id=${task.id}`)
+          .then(res => res.json())
+          .then(taskDetail => {
+            if (taskDetail.status !== 'running') {
+              setIsPolling(false)
+            }
+          })
+          .catch(err => {
+            console.error('检查任务状态失败:', err)
+            setIsPolling(false)
+          })
+      }
+
+      // 组件挂载时开始轮询
+      useEffect(() => {
+        fetchOutput()
+        
+        // 每5秒检查一次任务状态，确保及时停止轮询
+        if (isPolling) {
+          statusCheckRef.current = setInterval(checkTaskStatus, 5000)
+        }
+
+        // 组件卸载时清除所有定时器
+        return () => {
+          clearTimeout(timeoutRef.current)
+          clearInterval(statusCheckRef.current)
+        }
+      }, [isPolling])
+
+      return (
+        <div>
+          <pre style={{ whiteSpace: 'pre-wrap', height: '400px', overflow: 'auto', fontSize: '14px', lineHeight: '1.5' }}>
+            {output}
+          </pre>
+          {isPolling && (
+            <div style={{ marginTop: '12px', textAlign: 'center', color: '#1890ff' }}>
+              正在获取最新输出...
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    // 创建Modal
+    modal.info({
+      title: `任务Output - ${task.id}`,
+      content: <OutputModal />,
+      width: 800,
+      okButtonProps: {
+        style: { display: 'none' }
       }
     })
   }
@@ -188,16 +309,46 @@ const TasksPage = () => {
       render: (text) => <InputParamViewer text={text} modal={modal} />,
     },
     {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (status) => {
+        const statusColorMap = {
+          'success': 'green',
+          'failed': 'red',
+          'running': 'blue',
+          'pending': 'orange',
+          'error': 'purple',
+          'unknown': 'gray'
+        }
+        
+        const statusTextMap = {
+          'success': '成功',
+          'failed': '失败',
+          'running': '运行中',
+          'pending': '待处理',
+          'error': '错误',
+          'unknown': '未知'
+        }
+        
+        return (
+          <Tag color={statusColorMap[status] || 'gray'}>
+            {statusTextMap[status] || status}
+          </Tag>
+        )
+      },
+    },
+    {
       title: '创建时间',
       dataIndex: 'create_time',
       key: 'create_time',
       width: 180,
       render: (text) => new Date(text).toLocaleString(),
     },
-    {
-      title: '操作',
+    {title: '操作',
       key: 'action',
-      width: 150,
+      width: 250,
       render: (_, record) => (
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button
@@ -206,6 +357,20 @@ const TasksPage = () => {
             onClick={() => handleRerunTask(record)}
           >
             重跑
+          </Button>
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewResult(record)}
+          >
+            查看结果
+          </Button>
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewOutput(record)}
+          >
+            查看Output
           </Button>
           <Button
             type="text"

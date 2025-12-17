@@ -1,6 +1,7 @@
 package task
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"web-tool-backend/container"
@@ -14,12 +15,12 @@ var (
 
 func GetTaskOutput(ctx *gin.Context) {
 	taskID := ctx.Param("task_id")
-	page := ctx.DefaultQuery("page", "1")
+	lastID := ctx.DefaultQuery("last_id", "0")
 	pageSize := ctx.DefaultQuery("page_size", DefaultPageSize)
-	pageInt, _ := strconv.Atoi(page)
+	lastIDInt, _ := strconv.Atoi(lastID)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
 	taskIDInt, _ := strconv.Atoi(taskID)
-	taskOutputs, err := container.GetTaskOutput(uint(taskIDInt), pageInt, pageSizeInt)
+	taskOutputs, err := container.GetTaskOutput(uint(taskIDInt), lastIDInt, pageSizeInt)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -35,6 +36,7 @@ func PostTaskOutput(ctx *gin.Context) {
 		return
 	}
 
+	fmt.Printf("taskID: %s, output: %s\n", taskID, string(output))
 	taskIDInt, _ := strconv.Atoi(taskID)
 	err = container.CreateTaskOutput(uint(taskIDInt), string(output))
 	if err != nil {

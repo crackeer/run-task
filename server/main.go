@@ -62,6 +62,8 @@ func Main() {
 		apiGroup.POST("/task/output/:task_id", task.PostTaskOutput)
 		apiGroup.GET("/task/output/:task_id", task.GetTaskOutput)
 
+		apiGroup.POST("/task/callback/:task_id", task.Callback)
+
 		apiGroup.POST("/upload", file.UploadFile)
 		apiGroup.GET("/file/*path", file.DownloadFile)
 	}

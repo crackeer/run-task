@@ -1,6 +1,7 @@
 package task
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"web-tool-backend/container"
@@ -15,15 +16,17 @@ type CallbackRequest struct {
 }
 
 func Callback(ctx *gin.Context) {
-	taskIDStr := ctx.Query("task_id")
-	taskIDInt, _ := strconv.Atoi(taskIDStr)
-	task := container.GetTask(uint(taskIDInt))
+	taskIDStr := ctx.Param("task_id")
+	taskID, _ := strconv.Atoi(taskIDStr)
+	task := container.GetTask(uint(taskID))
+	fmt.Printf("task: %v\n", task)
 	if task == nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "任务不存在"})
 		return
 	}
 	var callback CallbackRequest
 	if err := ctx.ShouldBindJSON(&callback); err != nil {
+		fmt.Printf("err: %v\n", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
