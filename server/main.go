@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"web-tool-backend/api"
-	"web-tool-backend/api/file"
-	"web-tool-backend/api/task"
-	"web-tool-backend/container"
+	"run-task/api/file"
+	"run-task/api/task"
+	"run-task/container"
 
 	"github.com/gin-gonic/gin"
 
@@ -44,10 +43,11 @@ func Main() {
 
 	// 创建 Gin 实例
 	router := gin.Default()
-	router.Use(CORS())
+	router.Use(CORS(), gin.BasicAuth(gin.Accounts{
+		cfg.Username: cfg.Password,
+	}))
 	apiGroup := router.Group("/api")
 	{
-		apiGroup.GET("/run", api.RunTaskSSE)
 		apiGroup.GET("/task/config/list", task.GetTaskConfigList)
 		apiGroup.POST("/task/config/create", task.CreateTaskConfig)
 		apiGroup.POST("/task/config/update", task.UpdateTaskConfig)

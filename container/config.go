@@ -12,6 +12,8 @@ type AppConfig struct {
 	TempDir     string `env:"TEMP_DIR" envDefault:"/tmp/run-task"`
 	Database    string `env:"DATABASE" envDefault:"/tmp/run-task.db"`
 	AppHost     string `env:"APP_HOST" envDefault:"http://localhost:8080"`
+	Username    string `env:"USERNAME" envDefault:"admin"`
+	Password    string `env:"PASSWORD" envDefault:"123456"`
 }
 
 var (

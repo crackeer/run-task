@@ -1,6 +1,6 @@
 package main
 
-import "web-tool-backend/server"
+import "run-task/server"
 
 func main() {
 	server.Main()
