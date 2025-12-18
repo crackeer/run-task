@@ -43,9 +43,7 @@ func Main() {
 
 	// 创建 Gin 实例
 	router := gin.Default()
-	router.Use(CORS(), gin.BasicAuth(gin.Accounts{
-		cfg.Username: cfg.Password,
-	}))
+	router.Use(CORS())
 	apiGroup := router.Group("/api")
 	{
 		apiGroup.GET("/task/config/list", task.GetTaskConfigList)
@@ -68,7 +66,9 @@ func Main() {
 		apiGroup.GET("/file/*path", file.DownloadFile)
 	}
 
-	router.NoRoute(func(ctx *gin.Context) {
+	router.NoRoute(gin.BasicAuth(gin.Accounts{
+		cfg.Username: cfg.Password,
+	}), func(ctx *gin.Context) {
 		fullPath := filepath.Join(cfg.FrontendDir, ctx.Request.URL.Path)
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			ctx.File(filepath.Join(cfg.FrontendDir, "index.html"))
