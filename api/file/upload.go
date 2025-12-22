@@ -30,6 +30,6 @@ func UploadFile(ctx *gin.Context) {
 		return
 	}
 
-	downloadURL := cfg.AppHost + "/api/file" + tempPath
+	downloadURL := cfg.AppHost + "/api/file/get" + tempPath
 	ctx.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully", "path": tempPath, "code": 0, "url": downloadURL})
 }

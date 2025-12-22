@@ -62,8 +62,10 @@ func Main() {
 
 		apiGroup.POST("/task/callback/:task_id", task.Callback)
 
-		apiGroup.POST("/upload", file.UploadFile)
-		apiGroup.GET("/file/*path", file.DownloadFile)
+		apiGroup.POST("/file/upload", file.UploadFile)
+		apiGroup.GET("/file/get/*path", file.DownloadFile)
+		apiGroup.GET("/file/list", file.ListFiles)
+		apiGroup.POST("/file/delete", file.DeleteFile)
 	}
 
 	router.NoRoute(gin.BasicAuth(gin.Accounts{
