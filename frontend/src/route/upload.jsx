@@ -14,7 +14,7 @@ export const Route = createFileRoute('/upload')({
 function UploadPage() {
     const [messageApi, contextHolder] = message.useMessage()
     const [modalApi, modalContextHolder] = Modal.useModal()
-    const [downloadUrl, setDownloadUrl] = useState('')
+    const [downloadUrl, setDownloadUrl] = useState([])
     const [fileList, setFileList] = useState([])
     const [serverFiles, setServerFiles] = useState([])
     const [loading, setLoading] = useState(false)
@@ -67,7 +67,7 @@ function UploadPage() {
                             relative_path: file.relative_path
                         }
                     })
-                    
+
                     if (response.data.code === 0) {
                         messageApi.success('文件删除成功')
                         // 删除成功后刷新文件列表
@@ -116,7 +116,13 @@ function UploadPage() {
             // 上传成功，获取下载链接
             const response = info.file.response
             if (response && response.url) {
-                setDownloadUrl(response.url)
+                // 将下载链接添加到数组中，避免重复
+                setDownloadUrl(prevUrls => {
+                    if (prevUrls.includes(response.url)) {
+                        return prevUrls
+                    }
+                    return [...prevUrls, response.url]
+                })
                 messageApi.success(`${info.file.name} 上传成功`)
             }
         } else if (info.file.status === 'error') {
@@ -210,6 +216,8 @@ function UploadPage() {
                     customRequest={customRequest}
                     fileList={fileList}
                     onChange={handleChange}
+                    maxCount={10}
+                    multiple={true}
                     showUploadList={{
                         showRemoveIcon: true,
                         // 自定义上传列表项，显示进度条
@@ -234,16 +242,16 @@ function UploadPage() {
                 </Upload>
             </Card>
 
-            {downloadUrl && (
+            {downloadUrl.length > 0 && (
                 <Card title="下载链接">
                     <div>
                         <TextArea
-                            value={downloadUrl}
+                            value={downloadUrl.join('\n')}
                             readOnly
                             rows={4}
                             style={{ marginBottom: 8 }}
                         />
-                        <CopyToClipboard text={downloadUrl} onCopy={() => messageApi.success('链接已复制')}>
+                        <CopyToClipboard text={downloadUrl.join('\n')} onCopy={() => messageApi.success('链接已复制')}>
                             <Button
                                 icon={<CopyOutlined />}
                             >
