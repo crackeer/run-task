@@ -229,12 +229,12 @@ const TasksPage = () => {
         },
         {
             title: '任务标题',
-            dataIndex: 'task_type',
+            dataIndex: 'title',
             key: 'title',
             width: 200,
-            render: (taskType) => {
-                const tool = tools.find(t => t.name === taskType)
-                return tool ? tool.title : taskType
+            render: (_, record) => {
+                const tool = tools.find(t => t.name === record.task_type)
+                return tool ? tool.title : record.task_type
             },
         },
         {
