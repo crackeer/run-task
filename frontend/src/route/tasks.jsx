@@ -233,7 +233,7 @@ const TasksPage = () => {
             key: 'title',
             width: 200,
             render: (_, record) => {
-                const tool = tools.find(t => t.name === record.task_type)
+                const tool = tools.find(t => t.task_type === record.task_type)
                 return tool ? tool.title : record.task_type
             },
         },
