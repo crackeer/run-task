@@ -73,7 +73,7 @@ const TasksPage = () => {
 
     // 获取工具列表
     useEffect(() => {
-        fetch('/api/tools')
+        fetch('/api/task/config/list')
             .then(res => res.json())
             .then(data => setTools(data))
             .catch(err => message.error('获取工具列表失败'))
